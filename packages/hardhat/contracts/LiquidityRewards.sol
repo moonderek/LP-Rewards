@@ -9,7 +9,7 @@ contract LiquidityRewards is Ownable {
   event NFTMinted(uint256 indexed tokenId, address indexed reciptient);
   event NFTBurnedMintedLiquidity(uint256 indexed tokenId, address indexed reciptient);
 
-  event SetPurpose(address indexed sender, string  purpose);
+  event SetPurpose(address sender, string purpose);
 
 
   string public purpose = "Being confused!!!";
