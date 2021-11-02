@@ -35,7 +35,6 @@ describe("My Dapp", function () {
         const [owner] = await ethers.getSigners();
 
         const newPurpose = "Another Test Purpose";
-        console.log("poop");
 
         expect(await myContract.setPurpose(newPurpose))
           .to.emit(myContract, "SetPurpose")
