@@ -1,53 +1,80 @@
-pragma solidity >=0.8.0 <0.9.0;
 //SPDX-License-Identifier: MIT
+pragma solidity >=0.8.0 <0.9.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol"; //https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+// import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+// import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 
 contract LiquidityRewards is Ownable {
 
-  event OneMonthNFTMinted(uint256 indexed tokenId, address indexed reciptient);
-  event NFTBurnedMintedLiquidity(uint256 indexed tokenId, address indexed reciptient);
-  event SetPurpose(address sender, string purpose);
 
-  address public oneMonthAddr; // nft after 1 months of liquidity
-  address public twoMonthAddr; // nft after 2 months of liquidity
-  address public sixMonthAddr; // nft after 6 months of liquidity
-  address public tokenA; // liquidity pool tokenA
-  address public tokenB; // liquidity pool tokenB
-  uint16 public burnReward; // reward for burning NFT
-  uint16 public tokenAmountRequired;
-
-  struct LiquidityStruct {
+  struct UserInfo {
     uint oldestActiveDepositDate;
-    uint liquidityBalance;
-    uint listPointer;
+    uint amount;
+    // uint listPointer. not needed
   }
 
-  LiquidityStruct[] public liquidityList;
+   struct PoolInfo {
+      IERC20 lpToken; // Address of LP token contract.
+      uint256 allocPoint; // How many allocation points assigned to this pool. SUSHIs to distribute per block.
+      uint256 lastRewardBlock; // Last block number that SUSHIs distribution occurs.
+      uint256 accSushiPerShare; // Accumulated SUSHIs per share, times 1e12. See below.
+  }
 
-  mapping (address => LiquidityStruct) public liquidityToOwner; // liquidityToOwner[msg.sender] = ProviderInfo.id
+
+  mapping (address => UserInfo) public userInfo; // liquidityToOwner[msg.sender] = ProviderInfo.id
+  PoolInfo[] public poolInfo;
 
 
-  string public purpose = "Being confused!!!";
+  string public purpose = "Hi Mom!!!";
+
+
+  address public oneMonthAddr; // nft reward after 1 months of liquidity
+  address public twoMonthAddr; // nft reward after 2 months of liquidity
+  address public sixMonthAddr; // nft reward after 6 months of liquidity
+
+  IERC20 public lpToken;
+  uint16 public burnReward; // reward for burning NFT
+  uint16 public tokenAmountRequired;
+  
+  uint256 public startBlock;
+
+  // Total allocation poitns. Must be the sum of all allocation points in all pools.
+  uint256 public totalAllocPoint = 0;
+
+  event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
+  event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
+
+  event OneMonthNFTMinted(uint256 indexed tokenId, address indexed reciptient);
+  event NFTBurnedMintedLiquidity(uint256 indexed tokenId, address indexed reciptient);
+  
+  event SetPurpose(address sender, string purpose);
+
 
   constructor(
+    
     // address _oneMonthAddr,
     // address _twoMonthAddr,
     // address _sixMonthAddr,
-    // address _tokenA,
-    // address _tokenB,
+    // IERC20 lpToken,
     // uint16 _burnReward,
     // uint16 _tokenAmountRequired
+    // uint256 _startBlock,
+
   ) {
     setPurpose(purpose);
     // oneMonthAddr = _oneMonthAddr; 
     // twoMonthAddr = _twoMonthAddr; 
     // sixMonthAddr = _sixMonthAddr; 
-    // tokenA = _tokenA; 
-    // tokenB = _tokenB; 
+    // IERC20 lpToken,
     // burnReward = _burnReward;
-    // tokenAmountRequired = _tokenAmountRequired;
+    // uint256 _startBlock,
+
   }
 
   function setPurpose(string memory _newPurpose) public {
@@ -56,32 +83,37 @@ contract LiquidityRewards is Ownable {
     emit SetPurpose(msg.sender, purpose);
   }
 
-  function isLiquidity(address _liquidityAddress) public view returns(bool isIndeed){
-    if(liquidityList.length  == 0) return false;
-    return false; //fix
+  // Sushiswap
+  // Deposit LP tokens to MasterChef for SUSHI allocation.
+  function deposit(uint256 _pid, uint256 _amount) public {
+    PoolInfo storage pool = poolInfo[_pid];
+    UserInfo storage user = userInfo[_pid][msg.sender];
+    // updatePool(_pid);
+
+    if (user.amount > 0) {
+        // uint256 pending = user.amount.mul(pool.accSushiPerShare).div(1e12).sub(user.rewardDebt);
+        // safeSushiTransfer(msg.sender, pending);
+
+    }
+    pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+    user.amount = user.amount.add(_amount);
+    emit Deposit(msg.sender, _pid, _amount);
   }
 
-  function addLiquidity(uint32 _amount) public {
-    // (1) call uniswap contract to add liquidity & confirm it was successful 
-    // https://github.com/Uniswap/v3-periphery/blob/main/contracts/base/LiquidityManagement.sol
+   // Withdraw LP tokens from MasterChef.
+  function withdraw(uint256 _pid, uint256 _amount) public {
+    PoolInfo storage pool = poolInfo[_pid];
+    UserInfo storage user = userInfo[_pid][msg.sender];
+    require(user.amount >= _amount, "withdraw: not good");
+    // updatePool(_pid);
+    uint256 pending = user.amount.mul(pool.accSushiPerShare).div(1e12).sub(user.rewardDebt);
 
-    // if msg.sender already has liquidity -> update struct
-    if(isLiquidity(msg.sender) == true) revert();
-
-    uint liquidityBalance = fakeUniswapAddLiquidity();
-    uint id = liquidityList.length - 1;
-
-    liquidityList.push(LiquidityStruct(block.timestamp, _amount, id));
-
-    liquidityToOwner[msg.sender].listPointer = id;
-    liquidityToOwner[msg.sender].liquidityBalance = liquidityBalance;
-    liquidityToOwner[msg.sender].oldestActiveDepositDate = block.timestamp;
-
-  }
-
-  function removeLiquidity(uint32 _amount) public {
-
-  }
+    // safeSushiTransfer(msg.sender, pending);
+    user.amount = user.amount.sub(_amount);
+    user.rewardDebt = user.amount.mul(pool.accSushiPerShare).div(1e12);
+    pool.lpToken.safeTransfer(address(msg.sender), _amount);
+    emit Withdraw(msg.sender, _pid, _amount);
+    }
 
   function mintOneMonthNFT() public {
     // require() // find liquidity on uniswap 
