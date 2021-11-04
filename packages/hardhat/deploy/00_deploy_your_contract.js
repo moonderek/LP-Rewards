@@ -5,10 +5,17 @@ const { ethers } = require("hardhat");
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  await deploy("LiquidityRewards", {
-    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+
+  await deploy("OneMonthNFT", {
     from: deployer,
-    // args: ["Hello"],
+    log: true,
+  });
+
+  const OneMonthNFT = await ethers.getContract("OneMonthNFT", deployer);
+
+  await deploy("LiquidityRewards", {
+    from: deployer,
+    args: [OneMonthNFT.address],
     log: true,
   });
 
