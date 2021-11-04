@@ -19,18 +19,12 @@ contract LiquidityRewards is Ownable {
     // uint listPointer. not needed
   }
 
-   struct PoolInfo {
-      IERC20 lpToken; // Address of LP token contract.
-      uint256 allocPoint; // How many allocation points assigned to this pool. SUSHIs to distribute per block.
-      uint256 lastRewardBlock; // Last block number that SUSHIs distribution occurs.
-      uint256 accSushiPerShare; // Accumulated SUSHIs per share, times 1e12. See below.
-  }
+
 
 
   // mapping (address => UserInfo) public userInfo; // liquidityToOwner[msg.sender] = ProviderInfo.id
   mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
-  PoolInfo[] public poolInfo;
 
 
   string public purpose = "Hi Mom!!!";
@@ -94,7 +88,6 @@ contract LiquidityRewards is Ownable {
   // Sushiswap
   // Deposit LP tokens to MasterChef for SUSHI allocation.
   function deposit(uint256 _pid, uint256 _amount) public {
-    PoolInfo storage pool = poolInfo[_pid];
     UserInfo storage user = userInfo[_pid][msg.sender];
     // updatePool(_pid);
 
