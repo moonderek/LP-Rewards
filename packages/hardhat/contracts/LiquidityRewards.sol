@@ -16,11 +16,7 @@ contract LiquidityRewards is Ownable {
   struct UserInfo {
     uint256 oldestActiveDepositBlock;
     uint amount;
-    // uint listPointer. not needed
   }
-
-
-
 
   // mapping (address => UserInfo) public userInfo; // liquidityToOwner[msg.sender] = ProviderInfo.id
   mapping(uint256 => mapping(address => UserInfo)) public userInfo;
@@ -92,39 +88,31 @@ contract LiquidityRewards is Ownable {
     // updatePool(_pid);
 
     if (user.amount > 0) {
-        // uint256 pending = user.amount.mul(pool.accSushiPerShare).div(1e12).sub(user.rewardDebt);
-        // safeSushiTransfer(msg.sender, pending);
-        user.amount = user.amount.add(_amount);
+      user.amount = user.amount.add(_amount);
     }
 
     if (user.amount == 0) {
-         user.oldestActiveDepositBlock = block.timestamp;
+      user.oldestActiveDepositBlock = block.timestamp;
     }
 
-    // pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
     user.amount = user.amount.add(_amount);
     emit Deposit(msg.sender, _pid, _amount);
   }
 
    // Withdraw LP tokens from MasterChef.
   function withdraw(uint256 _pid, uint256 _amount) public {
-    // PoolInfo storage pool = poolInfo[_pid];
     UserInfo storage user = userInfo[_pid][msg.sender];
     require(user.amount >= _amount, "withdraw: not good");
-    // updatePool(_pid);
 
     // check if transaction is pending for this scope?
     // uint256 pending = user.amount.mul(pool.accSushiPerShare).div(1e12).sub(user.rewardDebt);
 
-    // safeSushiTransfer(msg.sender, pending);
     user.amount = user.amount.sub(_amount);
-    // user.rewardDebt = user.amount.mul(pool.accSushiPerShare).div(1e12);
 
     if(lowerAmountBoundary > user.amount){  
        user.oldestActiveDepositBlock = 0;
     }
 
-    // pool.lpToken.safeTransfer(address(msg.sender), _amount);
     emit Withdraw(msg.sender, _pid, _amount);
     }
 
