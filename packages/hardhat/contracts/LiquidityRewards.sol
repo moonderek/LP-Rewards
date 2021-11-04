@@ -22,9 +22,8 @@ contract LiquidityRewards is Ownable {
   mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
   address public oneMonthAddr; // nft reward after 1 months of liquidity
-  uint16 public lowerAmountBoundary; // minumum amount required to deposit be eligible to mint nft
+  uint16 public tokenAmountRequired; // minumum amount required to deposit be eligible to mint nft
   uint16 public burnReward; // reward for burning NFT
-  uint16 public tokenAmountRequired; // 
   IERC20 public lpToken;
 
 
@@ -38,18 +37,16 @@ contract LiquidityRewards is Ownable {
 
 
   constructor(
-    address _oneMonthAddr
+    address _oneMonthAddr,
     // IERC20 lpToken,
-    // uint16 _burnReward,
-    // uint16 _tokenAmountRequired
+    uint16 _burnReward,
+    uint16 _tokenAmountRequired
 
   ) {
     oneMonthAddr = _oneMonthAddr; 
     // IERC20 lpToken,
-    // burnReward = _burnReward;
-    // tokenAmountRequired = _tokenAmountRequired
-
-
+    burnReward = _burnReward;
+    tokenAmountRequired = _tokenAmountRequired;
   }
 
 
@@ -62,7 +59,7 @@ contract LiquidityRewards is Ownable {
     }
 
     // if user has already deposited LP but are below lowerAmountBoundary
-    if (user.amount + _amount > lowerAmountBoundary && user.amount < lowerAmountBoundary) {
+    if (user.amount + _amount > tokenAmountRequired && user.amount < tokenAmountRequired) {
       user.oldestActiveDepositBlock = block.timestamp;
     }
 
@@ -79,7 +76,7 @@ contract LiquidityRewards is Ownable {
     user.amount = user.amount.sub(_amount);
     // lpToken.safeTransferFrom(address(this), address(msg.sender), _amount);
 
-    if(lowerAmountBoundary > user.amount){  
+    if(tokenAmountRequired > user.amount){  
        user.oldestActiveDepositBlock = 0;
     }
 
@@ -89,17 +86,11 @@ contract LiquidityRewards is Ownable {
   function mintOneMonthNFT(uint256 _pid) public {
     UserInfo storage user = userInfo[_pid][msg.sender];
 
-    require(lowerAmountBoundary < user.amount, "Not enough tokens");
+    require(tokenAmountRequired > user.amount, "Not enough tokens");
     require(block.timestamp < user.oldestActiveDepositBlock + 30 days, "Not enough time has passed"); //https://ethereum.stackexchange.com/questions/5924/how-do-ethereum-mining-nodes-maintain-a-time-consistent-with-the-network/5931#5931
 
     // mint() NFT
     // emit OneMonthNFTMinted(msg.sender, msg.sender); 
   }
-
-  function fakeUniswapAddLiquidity() internal pure returns (uint) {
-    return 10;
-  }
-  
-
 
 }

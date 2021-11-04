@@ -15,7 +15,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   await deploy("LiquidityRewards", {
     from: deployer,
-    args: [OneMonthNFT.address],
+    args: [OneMonthNFT.address, 50, 50],
     log: true,
   });
 
