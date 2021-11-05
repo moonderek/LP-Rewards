@@ -11,11 +11,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     log: true,
   });
 
-  const OneMonthNFT = await ethers.getContract("OneMonthNFT", deployer);
+  await deploy("ERC20Mock", {
+    from: deployer,
+    args: ["Dummy Token", "DUMMY", "1"],
+    log: true,
+  });
+
+  const dummyToken = await ethers.getContract("ERC20Mock");
+  const OneMonthNFT = await ethers.getContract("OneMonthNFT");
 
   await deploy("LiquidityRewards", {
     from: deployer,
-    args: [OneMonthNFT.address, 50, 50],
+    args: [OneMonthNFT.address, dummyToken.address, 50, 50],
     log: true,
   });
 

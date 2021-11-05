@@ -19,7 +19,7 @@ contract LiquidityRewards is Ownable {
 
   mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
-  address public oneMonthAddr; // nft reward after 1 months of liquidity
+  address public oneMonthNFTAddr; // nft reward after 1 months of liquidity
   uint16 public tokenAmountRequired; // minumum amount required to deposit be eligible to mint nft
   uint16 public burnReward; // reward for burning NFT
   IERC20 public lpToken; 
@@ -27,22 +27,20 @@ contract LiquidityRewards is Ownable {
 
   event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
   event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
-
   event OneMonthNFTMinted(uint256 indexed tokenId, address indexed reciptient);
   event NFTBurnedMintedLiquidity(uint256 indexed tokenId, address indexed reciptient);
-
   event SetPurpose(address sender, string purpose);
 
 
   constructor(
-    address _oneMonthAddr,
-    // IERC20 lpToken,
+    address _oneMonthNFTAddr,
+    IERC20 _lpToken,
     uint16 _burnReward,
     uint16 _tokenAmountRequired
 
   ) {
-    oneMonthAddr = _oneMonthAddr; 
-    // IERC20 lpToken,
+    oneMonthNFTAddr = _oneMonthNFTAddr; 
+    lpToken = _lpToken;
     burnReward = _burnReward;
     tokenAmountRequired = _tokenAmountRequired;
   }
@@ -83,12 +81,9 @@ contract LiquidityRewards is Ownable {
 
   function mintOneMonthNFT(uint256 _pid) public {
     UserInfo storage user = userInfo[_pid][msg.sender];
-
     require(tokenAmountRequired > user.amount, "Not enough tokens");
     require(block.timestamp < user.oldestActiveDepositBlock + 30 days, "Not enough time has passed"); //https://ethereum.stackexchange.com/questions/5924/how-do-ethereum-mining-nodes-maintain-a-time-consistent-with-the-network/5931#5931
-
     // mint() NFT
     // emit OneMonthNFTMinted(msg.sender, msg.sender); 
   }
-
 }

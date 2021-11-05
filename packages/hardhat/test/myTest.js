@@ -5,22 +5,65 @@ const { solidity } = require("ethereum-waffle");
 use(solidity);
 
 describe("LiquidityRewards", function () {
-  let myContract;
+  let LiquidityRewards;
 
-  before((done) => {
-    setTimeout(done, 2000);
-  });
+  // Contract constructor args
+  let lpToken;
+  let tokenAmountRequired;
+  let burnReward;
 
-  describe("LiquidityRewards", function () {
-    it("Should deploy LiquidityRewards", async function () {
-      const OneMonthNFT = await ethers.getContractFactory("OneMonthNFT");
-      const oneMonthNFT = await OneMonthNFT.deploy();
+  let alice;
+  let bob;
+  let dev;
+  let minter;
 
-      const LiquidityRewards = await ethers.getContractFactory(
+  let oneMonthNFTAddr;
+
+  describe("LiquidityRewards time based nfts rewards ", function () {
+    before(async () => {
+      const signers = await ethers.getSigners();
+      alice = signers[0];
+      bob = signers[1];
+      dev = signers[3];
+      minter = signers[5];
+
+      tokenAmountRequired = 1000;
+      burnReward = 5000;
+
+      // Mock NFT Contract
+      const OneMonthNFTAddr = await ethers.getContractFactory("OneMonthNFT");
+      oneMonthNFTAddr = await OneMonthNFTAddr.deploy();
+
+      // Mock ERC20
+      const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
+      lpToken = await ERC20Mock.deploy("LPToken1", "LP1", "10000000000");
+
+      // Transfer lp token to Alice and Bob
+      await lpToken.transfer(alice.address, "1000");
+      await lpToken.transfer(bob.address, "1000");
+
+      // Deploy LiquidityRewards contract
+      const liquidityRewards = await ethers.getContractFactory(
         "LiquidityRewards"
       );
 
-      myContract = await LiquidityRewards.deploy(oneMonthNFT.address, 50, 50);
+      LiquidityRewards = await liquidityRewards.deploy(
+        oneMonthNFTAddr.address,
+        lpToken.address,
+        burnReward,
+        tokenAmountRequired
+      );
+    });
+
+    it("should set correct state variables", async function () {
+      expect(tokenAmountRequired).to.equal(
+        await LiquidityRewards.tokenAmountRequired()
+      );
+      expect(burnReward).to.equal(await LiquidityRewards.burnReward());
+      expect(lpToken.address).to.equal(await LiquidityRewards.lpToken());
+      expect(oneMonthNFTAddr.address).to.equal(
+        await LiquidityRewards.oneMonthNFTAddr()
+      );
     });
 
     // describe("setPurpose()", function () {
