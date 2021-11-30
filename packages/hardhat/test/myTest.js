@@ -66,6 +66,19 @@ describe("LiquidityRewards", function () {
       );
     });
 
+    it("allow track amount of lp token deposited into contract", async function () {
+      let vaultWithAlice = await LiquidityRewards.connect(alice);
+      let vaultWithMockFactorySigner = await LiquidityRewards.connect(
+        mockFactoryContract
+      );
+
+      await LiquidityRewards.deposit("100", this.lp.address, ADDRESS_ZERO); // t-55
+
+      expect(oneMonthNFTAddr.address).to.equal(
+        await LiquidityRewards.oneMonthNFTAddr()
+      );
+    });
+
     // describe("setPurpose()", function () {
     //   it("Should be able to set a new purpose", async function () {
     //     const newPurpose = "Test Purpose";
